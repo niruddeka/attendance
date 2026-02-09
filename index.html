@@ -3,60 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Biometric Attendance</title>
+    <title>নিকেতন হাজিৰা ব্যৱস্থা</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 100%;
-            max-width: 450px;
-            box-sizing: border-box;
-        }
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #f0f2f5; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 450px; }
         h2 { color: #1a73e8; margin-bottom: 20px; }
-        p { margin-bottom: 15px; color: #555; font-size: 1.1em; }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 18px 35px;
-            font-size: 20px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: 0.3s ease;
-            width: 100%;
-            margin-top: 25px;
-            font-weight: bold;
-        }
+        button { background-color: #007bff; color: white; border: none; padding: 18px 35px; font-size: 20px; border-radius: 50px; cursor: pointer; transition: 0.3s; width: 100%; font-weight: bold; }
         button:hover { background-color: #0056b3; }
-        #status { margin-top: 25px; font-size: 16px; color: #333; min-height: 20px; }
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
-            display: none;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #status { margin-top: 25px; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -66,19 +20,17 @@
     <p>শিক্ষক: <b>Nirud Kumar Deka</b></p>
     <p>ID: <b>2</b></p>
     <button onclick="authenticateAndPunch()">
-        <span class="loading-spinner"></span>
         <span id="buttonText">আঙুলি দি হাজিৰা দিয়ক</span>
     </button>
     <div id="status"></div>
 </div>
 
 <script type="module">
-    // Firebase Setup (Realtime Database ব্যৱহাৰ কৰা হৈছে)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyB-CRqxseYcFnBriWdPxSywu9VIVdxBC7g", // আপোনাৰ আচল API Key ইয়াত লিখক
+        apiKey: "AIzaSyB-CRqxseYcFnBriWdPxSywu9VIVdxBC7g", // আপোনাৰ আচল API Key ইয়াতেই থাকিব দিব
         authDomain: "school-attendance-bcb7a.firebaseapp.com",
         databaseURL: "https://school-attendance-bcb7a-default-rtdb.firebaseio.com",
         projectId: "school-attendance-bcb7a",
@@ -90,56 +42,35 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const teacherId = "2"; // আপোনাৰ আইডি ২
-
     async function sendPunchToFirebase() {
         const statusDiv = document.getElementById('status');
         try {
-            // Realtime Database ৰ 'attendance/latest' লৈ ডাটা পঠোৱা হৈছে
-            await set(ref(db, 'attendance/latest'), {
-                id: teacherId,
+            // এতিয়া 'set' ৰ ঠাইত 'push' ব্যৱহাৰ কৰা হৈছে যাতে একো মচি নাযায়
+            await push(ref(db, 'attendance_queue'), {
+                id: "2",
                 time: new Date().toLocaleString('en-GB', { hour12: false }).replace(',', '')
             });
-            statusDiv.innerHTML = "<b style='color:green;'>✅ হাজিৰা কম্পিউটাৰলৈ পঠোৱা হ'ল!</b>";
-            alert("হাজিৰা পঠোৱা হ'ল!");
+            statusDiv.innerHTML = "<b style='color:green;'>✅ হাজিৰা জমা হ'ল! (সপ্তাহৰ মূৰত Sync কৰিব পাৰিব)</b>";
+            alert("হাজিৰা জমা কৰা হ'ল।");
         } catch (e) {
-            console.error("Error: ", e);
             statusDiv.innerHTML = "<b style='color:red;'>❌ ভুল হৈছে!</b>";
         }
     }
 
     window.authenticateAndPunch = async function() {
-        const statusDiv = document.getElementById('status');
-        const spinner = document.querySelector('.loading-spinner');
         const buttonText = document.getElementById('buttonText');
-
-        statusDiv.innerHTML = "";
-        spinner.style.display = 'inline-block';
         buttonText.innerText = "প্ৰমাণীকৰণ চলি আছে...";
-
         try {
-            // Biometric Authentication
             const credential = await navigator.credentials.get({
-                publicKey: {
-                    challenge: new Uint8Array(16),
-                    rpId: window.location.hostname,
-                    userVerification: 'required',
-                    allowCredentials: []
-                }
+                publicKey: { challenge: new Uint8Array(16), rpId: window.location.hostname, userVerification: 'required', allowCredentials: [] }
             });
-
-            if (credential) {
-                await sendPunchToFirebase();
-            }
+            await sendPunchToFirebase();
         } catch (error) {
-            console.log("Using fallback...");
-            await sendPunchToFirebase(); // ফিংগাৰপ্ৰিন্ট কাম নকৰিলে পোনপটীয়াকৈ পঠাব
+            await sendPunchToFirebase();
         } finally {
-            spinner.style.display = 'none';
             buttonText.innerText = "আঙুলি দি হাজিৰা দিয়ক";
         }
     };
 </script>
-
 </body>
 </html>
