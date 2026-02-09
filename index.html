@@ -5,23 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>নিকেতন নিৰাপদ হাজিৰা</title>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #f0f2f5; margin: 0; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 450px; }
-        h2 { color: #1a73e8; margin-bottom: 20px; }
-        button { background-color: #28a745; color: white; border: none; padding: 18px 35px; font-size: 20px; border-radius: 50px; cursor: pointer; transition: 0.3s; width: 100%; font-weight: bold; }
-        button:hover { background-color: #218838; }
-        #status { margin-top: 25px; font-size: 16px; font-weight: bold; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #eef2f3; margin: 0; padding: 20px; }
+        .card { background: white; padding: 40px 30px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
+        h2 { color: #2c3e50; margin-bottom: 10px; font-size: 24px; }
+        .info { color: #7f8c8d; margin-bottom: 30px; font-size: 16px; }
+        .btn-main { background: linear-gradient(135deg, #28a745, #218838); color: white; border: none; padding: 18px; font-size: 18px; border-radius: 15px; cursor: pointer; width: 100%; font-weight: bold; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); transition: 0.3s; }
+        #status { margin-top: 20px; font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>শংকৰদেৱ শিশু নিকেতন</h2>
-    <p>শিক্ষক: <b>Nirud Kumar Deka</b></p>
-    <p>আইডি: <b>00000002</b></p>
-    <button onclick="authenticateAndPunch()">
-        <span id="buttonText">আঙুলি দি প্ৰমাণিত কৰক</span>
-    </button>
+    <div class="info">শিক্ষক: <b>Nirud Kumar Deka</b><br>আইডি: <b>00000002</b></div>
+    
+    <button class="btn-main" onclick="startAuth()">হাজিৰা দিবলৈ টিপক</button>
+    
     <div id="status"></div>
 </div>
 
@@ -30,7 +29,7 @@
     import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyB-CRqxseYcFnBriWdPxSywu9VIVdxBC7g", // আপোনাৰ আচল API Key ইয়াত থাকিব
+        apiKey: "AIzaSyB-CRqxseYcFnBriWdPxSywu9VIVdxBC7g", 
         authDomain: "school-attendance-bcb7a.firebaseapp.com",
         databaseURL: "https://school-attendance-bcb7a-default-rtdb.firebaseio.com",
         projectId: "school-attendance-bcb7a",
@@ -41,54 +40,62 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const SECRET_PIN = "1989"; 
 
-    async function sendPunchToFirebase() {
+    // Firebase-লৈ ডাটা পঠোৱা ফাংচন
+    async function sendData() {
         const statusDiv = document.getElementById('status');
         try {
             await push(ref(db, 'attendance_queue'), {
                 id: "2",
                 time: new Date().toLocaleString('en-GB', { hour12: false }).replace(',', '')
             });
-            statusDiv.innerHTML = "<span style='color:green;'>✅ নিৰাপদভাৱে হাজিৰা জমা কৰা হ'ল!</span>";
-            alert("হাজিৰা সফল হ'ল।");
+            statusDiv.innerHTML = "<span style='color:green;'>✅ হাজিৰা সফলভাৱে জমা কৰা হ'ল!</span>";
+            alert("নিৰোদ দা, আপোনাৰ হাজিৰা সফল হ'ল।");
         } catch (e) {
-            statusDiv.innerHTML = "<span style='color:red;'>❌ ডাটা পঠোৱাত অসুবিধা হৈছে!</span>";
+            statusDiv.innerHTML = "<span style='color:red;'>❌ নেটৱৰ্কৰ সমস্যা হৈছে!</span>";
         }
     }
 
-    window.authenticateAndPunch = async function() {
-        const statusDiv = document.getElementById('status');
-        const buttonText = document.getElementById('buttonText');
-        
-        statusDiv.innerHTML = "প্ৰমাণীকৰণ চলি আছে...";
-        
-        // কেৱল HTTPS তহে বায়'মেট্ৰিক কাম কৰিব
-        if (!window.isSecureContext) {
-            statusDiv.innerHTML = "<span style='color:red;'>❌ নিৰাপত্তাৰ বাবে কেৱল HTTPS সংযোগতহে ফিংগাৰপ্ৰিন্ট কাম কৰিব।</span>";
-            return;
+    // PIN ব্যৱস্থা (Fallback)
+    function askPin() {
+        const pin = prompt("ফিংগাৰপ্ৰিন্ট কাম কৰা নাই। আপোনাৰ ৪ টা সংখ্যাৰ গোপন PIN দিয়ক:");
+        if (pin === SECRET_PIN) {
+            sendData();
+        } else if (pin !== null) {
+            alert("ভুল পিন! পুনৰ চেষ্টা কৰক।");
         }
+    }
 
-        try {
-            const credential = await navigator.credentials.get({
-                publicKey: {
-                    challenge: new Uint8Array(16),
-                    rpId: window.location.hostname,
-                    userVerification: 'required',
-                    allowCredentials: []
+    // মূল প্ৰমাণীকৰণ আৰম্ভ
+    window.startAuth = async function() {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerHTML = "প্ৰমাণীকৰণ চলি আছে...";
+
+        if (window.isSecureContext && window.PublicKeyCredential) {
+            try {
+                // ফিংগাৰপ্ৰিন্ট চেষ্টা কৰা হ'ব
+                const credential = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: new Uint8Array(16),
+                        rpId: window.location.hostname,
+                        userVerification: 'required',
+                        allowCredentials: []
+                    }
+                });
+                if (credential) {
+                    sendData();
+                } else {
+                    askPin();
                 }
-            });
-
-            if (credential) {
-                await sendPunchToFirebase();
-            } else {
-                statusDiv.innerHTML = "<span style='color:red;'>❌ প্ৰমাণীকৰণ ব্যৰ্থ হৈছে!</span>";
+            } catch (err) {
+                console.log("Biometric failed, switching to PIN");
+                askPin(); // ফিংগাৰপ্ৰিন্টত "No Passkeys" আহিলে পিন বিচাৰিব
             }
-        } catch (error) {
-            console.error(error);
-            statusDiv.innerHTML = "<span style='color:red;'>❌ ফিংগাৰপ্ৰিন্ট নিদিলে হাজিৰা জমা নহয়।</span>";
+        } else {
+            askPin(); // যদি ব্ৰাউজাৰে বায়'মেট্ৰিক সমৰ্থন নকৰে
         }
     };
 </script>
 </body>
 </html>
-
